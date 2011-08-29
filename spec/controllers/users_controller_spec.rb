@@ -33,6 +33,13 @@ describe UsersController do
 			get :new
 			response.should have_selector("input[name='user[password_confirmation]'][type='password']")
 		end
+		
+		it "should redirect already signed in users" do
+			@user = Factory(:user)
+			test_sign_in(@user)
+			get :new
+			response.should redirect_to(user_path(@user))
+		end
   end
 
 	describe "POST 'create'" do
@@ -59,6 +66,7 @@ describe UsersController do
 				post :create, :user => @attr
 				response.should render_template('new')
 			end
+			
 		end
 		
 		describe "success" do
@@ -90,6 +98,14 @@ describe UsersController do
 			end
 			
 		end
+		
+		it "should redirect already signed in users" do
+			@user = Factory(:user)
+			test_sign_in(@user)
+			get :new
+			response.should redirect_to(user_path(@user))
+		end
+
 	end
 
 	describe "GET 'show'" do
@@ -265,6 +281,31 @@ describe UsersController do
 				end
 			end
 			
+			describe "who are admins" do
+				
+				before(:each) do
+					admin = Factory(:user, :email => "admin@example.com", :admin => true)
+					test_sign_in(admin)
+				end
+				
+				it "should show the delete buttons" do
+					get :index
+					response.should have_selector("a", :content => "delete")
+				end
+								
+			end
+			
+			describe "who are not admins" do
+				
+				it "should not show the delete buttons" do
+					admin = Factory(:user, :email => "admin@example.com")
+					test_sign_in(admin)
+					get :index
+					response.should_not have_selector("a", :content => "delete")
+				end
+				
+			end
+			
 			it "should be successful" do
 				get :index
 				response.should be_success
@@ -320,8 +361,8 @@ describe UsersController do
 		describe "as an admin user" do
 			
 			before(:each) do
-				admin = Factory(:user, :email => "admin@example.com", :admin => true)
-				test_sign_in(admin)
+				@admin = Factory(:user, :email => "admin@example.com", :admin => true)
+				test_sign_in(@admin)
 			end
 			
 			it "should destroy the user" do
@@ -329,6 +370,12 @@ describe UsersController do
 					delete :destroy, :id => @user
 				end.should change(User, :count).by(-1)
 			end
+			
+			it "should not allow an admin to delete their own account" do
+				lambda do
+					delete :destroy, :id => @admin
+				end.should_not change(User, :count)
+			end 
 			
 			it "should redirect to the users page" do
 				delete :destroy, :id => @user
