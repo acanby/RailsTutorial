@@ -2,7 +2,7 @@
 
 Factory.define :user do |user|
 	user.name 	"Andrew Canby"
-	user.email 	"example-6@railstutorial.org"
+	user.email 	"example@railstutorial.org"
 	user.password "foobar"
 	user.password_confirmation "foobar"
 end
@@ -10,4 +10,9 @@ end
 	
 Factory.sequence :email do |n|
 	"person-#{n}@example.com"
+end
+
+Factory.define :micropost do |micropost|
+	micropost.content "Foo bar"
+	micropost.association :user
 end
